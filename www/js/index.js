@@ -10,6 +10,7 @@ $(function() {
 	$("#volumeItem").numeric({ negative: false });
 	$("#precoItem").maskMoney({showSymbol:false, thousands:'.', decimal:','});
 	$("#alertPesquisar").hide();
+	loadTabelaItens();
 });
 
 
@@ -34,6 +35,7 @@ $("#addCerveja").click(function(e){
 });
 
 $("#adiconarCotacao").click(function(e) {
+
 	var nomeCerveja = $("#nomeCerveja").val();
 	var localCerveja = $("#localCerveja").val();
 	var qtdItens = $("#qtdItens").val();
@@ -99,6 +101,10 @@ $("#adiconarCotacao").click(function(e) {
 	$("#campo-alerta").removeClass("alert alert-error");
 	$("#campo-alerta").html("");
 
+	adicionaCerveja(nomeCerveja, localCerveja, qtdItens, volumeItem, precoItem);
+
+	window.location = "index.html";
+
 });
 
 function aplicarEstiloErro(nomeGrupo, errMsg) {
@@ -112,4 +118,53 @@ function removerEstiloErro(nomeGrupo) {
 	$("#control-group-" + nomeGrupo).removeClass("error");
 	$("#help-block-" + nomeGrupo).html("");
 	$("#adiconarCotacao").removeClass("btn-danger");
+}
+
+function adicionaCerveja(nomeCerveja, localCerveja, qtdItens, volumeItem, precoItem) {
+	
+	//var listaCervejas = [{}];
+
+	var listaCervejasSS = localStorage.getItem("listaCervejas");
+
+	
+
+	var id = nomeCerveja + "#" + localCerveja;
+
+	var objCerveja = { 'id' : id,
+					   'nomeCerveja' : nomeCerveja, 
+					   'localCerveja' : localCerveja,
+					   'qtdItens' : qtdItens,
+					   'volumeItem' : volumeItem,
+					   'precoItem' : precoItem
+					 };
+
+	if (listaCervejasSS == null) {
+		listaCervejasSS = [objCerveja];
+	} else {
+		listaCervejasSS.push(objCerveja);
+	}
+
+	localStorage.setItem("listaCervejas", JSON.stringify(listaCervejasSS));
+}
+
+function loadTabelaItens() {
+	var listaCervejas = JSON.parse(localStorage.getItem("listaCervejas"));
+
+	if (listaCervejas == null)
+		return;
+
+	var html = '';
+
+	for (var i = 0; i < listaCervejas.length; i++) {
+		var item = listaCervejas[i];
+		html += "Cerveja: " + item.nomeCerveja + "<br />";
+		html += "Local: " + item.localCerveja + "<br />";
+		html += "Quantidade: " + item.qtdItens + "&nbsp;-&nbsp;" +
+					"Volume por item: " + item.volumeItem + "<br />";
+		html += "Preço por Item: R$ " + item.precoItem + "<br />";
+		html += "Valor por ml: R$ " + (parseInt(item.precoItem)/parseInt(item.volumeItem)).toFixed(6);
+	}
+
+	
+	$('#tabela tr:last').after('<tr><td>' + html + '</td></tr>');
 }
