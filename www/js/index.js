@@ -120,31 +120,79 @@ function removerEstiloErro(nomeGrupo) {
 	$("#adiconarCotacao").removeClass("btn-danger");
 }
 
+function generateCervejaId(nomeCerveja, localCerveja, timestamp) {
+	return nomeCerveja + "#" + localCerveja + "#" + timestamp;
+}
+
+function generateTimeStamp() {
+	var d = new Date();
+	return pad(d.getDate(),2) + pad((d.getMonth()+1),2) + pad(d.getFullYear(), 4) + pad(d.getHours(),2) + pad(d.getMinutes(),2) + pad(d.getSeconds(),2);
+}
+
+function getStringNow(timeStamp) {
+	var now = timeStamp.slice(0,2) + "/";
+	now += timeStamp.slice(2,4) + "/";
+	now += timeStamp.slice(4,8) + "-";
+	now += timeStamp.slice(8,10) + ":";
+	now += timeStamp.slice(10,12) + ":";
+	now += timeStamp.slice(12,14);
+	return now;
+}
+
+function pad(number, length) {
+   
+    var str = '' + number;
+    while (str.length < length) {
+        str = '0' + str;
+    }
+   
+    return str;
+
+}
+
 function adicionaCerveja(nomeCerveja, localCerveja, qtdItens, volumeItem, precoItem) {
 	
 	//var listaCervejas = [{}];
 
 	var listaCervejasSS = localStorage.getItem("listaCervejas");
 
-	
+	var timeStamp = generateTimeStamp();
+	var dataHora = getStringNow(timeStamp);
+	var id = generateCervejaId(nomeCerveja, localCerveja, timeStamp);
 
-	var id = nomeCerveja + "#" + localCerveja;
+	var valorMl = (parseInt(precoItem)/parseInt(volumeItem)).toFixed(6);
 
 	var objCerveja = { 'id' : id,
+					   'dataHora' : dataHora,
 					   'nomeCerveja' : nomeCerveja, 
 					   'localCerveja' : localCerveja,
 					   'qtdItens' : qtdItens,
 					   'volumeItem' : volumeItem,
-					   'precoItem' : precoItem
+					   'precoItem' : precoItem,
+					   'valorMl' : valorMl
 					 };
 
 	if (listaCervejasSS == null) {
 		listaCervejasSS = [objCerveja];
 	} else {
-		listaCervejasSS.push(objCerveja);
+		listaCervejasSS = JSON.parse(listaCervejasSS);
+		if (!containsItem(id, listaCervejasSS))
+			listaCervejasSS.push(objCerveja);
+		else {
+
+		}
 	}
 
 	localStorage.setItem("listaCervejas", JSON.stringify(listaCervejasSS));
+}
+
+function containsItem(id, listaCervejas) {
+	for (var i = 0; i < listaCervejas.length; i++) {
+		var item = listaCervejas[i];
+		if (id == item.id)
+			return true;
+	}
+	return false;
 }
 
 function loadTabelaItens() {
@@ -153,6 +201,8 @@ function loadTabelaItens() {
 	if (listaCervejas == null)
 		return;
 
+	listaCervejas.sort(sortFunction);
+
 	var html = '';
 
 	for (var i = 0; i < listaCervejas.length; i++) {
@@ -160,11 +210,22 @@ function loadTabelaItens() {
 		html += "Cerveja: " + item.nomeCerveja + "<br />";
 		html += "Local: " + item.localCerveja + "<br />";
 		html += "Quantidade: " + item.qtdItens + "&nbsp;-&nbsp;" +
-					"Volume por item: " + item.volumeItem + "<br />";
+					"Volume por item: " + item.volumeItem + " Mls<br />";
 		html += "Preço por Item: R$ " + item.precoItem + "<br />";
-		html += "Valor por ml: R$ " + (parseInt(item.precoItem)/parseInt(item.volumeItem)).toFixed(6);
+		html += "Valor por ml: R$ " + item.valorMl + "<br />";
+		html += "Data e hora: " + item.dataHora;
+		var htmlButtonEdit = '<a style="position: relative; top: -7px; right: -7px; float: right; padding: 0; border: 0"><i class="icon-remove-circle"></i></a>';
+		var htmlButtonDelete = '<a style="position: relative; top: -7px; right: -7px; float: right; padding: 0; border: 0"><i class="icon-edit"></i></a>';
+		$('#tabela tr:last').after('<tr><td>' + htmlButtonEdit + htmlButtonDelete + html + '</td></tr>');
+		html = '';
+
+
 	}
 
 	
-	$('#tabela tr:last').after('<tr><td>' + html + '</td></tr>');
+	
+}
+
+function sortFunction(a, b) {
+	return parseInt(a.valorMl*1000000) - parseInt(b.valorMl*1000000);
 }
